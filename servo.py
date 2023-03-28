@@ -1,40 +1,46 @@
 import RPi.GPIO as GPIO
 import time
 
-# встановлюємо режим номерації BCM
+# Configure GPIO settings
 GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
 
-# встановлюємо номер піна, який буде використовуватися для керування сервомотором
+# Define the GPIO pin connected to the servo motor
 servo_pin = 18
 
-# встановлюємо пін на вихід
+# Set up the GPIO pin for output
 GPIO.setup(servo_pin, GPIO.OUT)
 
-# створюємо об'єкт PWM з частотою 50 Гц
-pwm = GPIO.PWM(servo_pin, 50)
+# Set the frequency for the PWM signal (50Hz is typical for servos)
+pwm_frequency = 50
+pwm = GPIO.PWM(servo_pin, pwm_frequency)
 
-# стартуємо PWM з duty cycle 0 (повністю закритий)
+# Start PWM with a duty cycle of 0 (off)
 pwm.start(0)
 
-# функція для перетворення кута в duty cycle
+# Define a function to convert the desired angle to a duty cycle
 def angle_to_duty_cycle(angle):
-    duty_cycle = (0.05 * angle) + 2.5
-    return duty_cycle
+    min_duty_cycle = 2.5  # Duty cycle for 0 degrees
+    max_duty_cycle = 12.5  # Duty cycle for 180 degrees
+    return ((angle / 180) * (max_duty_cycle - min_duty_cycle)) + min_duty_cycle
 
-# рухаємо сервомотор на 90 градусів
-pwm.ChangeDutyCycle(angle_to_duty_cycle(90))
-time.sleep(1)
+try:
+    while True:
+        # Rotate the servo motor to 0 degrees
+        pwm.ChangeDutyCycle(angle_to_duty_cycle(0))
+        time.sleep(1)
 
-# рухаємо сервомотор на 0 градусів
-pwm.ChangeDutyCycle(angle_to_duty_cycle(0))
-time.sleep(1)
+        # Rotate the servo motor to 90 degrees
+        pwm.ChangeDutyCycle(angle_to_duty_cycle(90))
+        time.sleep(1)
 
-# рухаємо сервомотор на 180 градусів
-pwm.ChangeDutyCycle(angle_to_duty_cycle(180))
-time.sleep(1)
+        # Rotate the servo motor to 180 degrees
+        pwm.ChangeDutyCycle(angle_to_duty_cycle(180))
+        time.sleep(1)
 
-# зупиняємо PWM
-pwm.stop()
+except KeyboardInterrupt:
+    # Stop the PWM signal
+    pwm.stop()
 
-# вимикаємо GPIO
-GPIO.cleanup()
+    # Clean up the GPIO settings
+    GPIO.cleanup()
